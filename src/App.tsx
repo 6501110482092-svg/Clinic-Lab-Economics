@@ -282,12 +282,24 @@ export default function App() {
     localStorage.setItem('clinic_lab_active_tab', activeTab);
   }, [activeTab]);
 
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+
   const login = async () => {
+    setIsLoginLoading(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
+      if (error.code === 'auth/popup-blocked') {
+        alert("เบราว์เซอร์ของคุณบล็อกหน้าต่างป๊อปอัพ (Pop-up blocked) กรุณาอนุญาตให้แสดงป๊อปอัพสำหรับเว็บไซต์นี้ หรือลองเปิดในหน้าต่างใหม่ (New Tab)");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        // Just ignore if they closed the popup quickly
+      } else {
+        alert("การเข้าสู่ระบบขัดข้อง: " + (error.message || "โปรดลองใหม่อีกครั้ง"));
+      }
+    } finally {
+      setIsLoginLoading(false);
     }
   };
 
@@ -517,7 +529,7 @@ export default function App() {
               <Activity size={24} />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-slate-800">Clinic Lab Economics</h1>
+              <h1 className="text-lg font-bold tracking-tight text-slate-800">BK Lab Plus Economics</h1>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Health Finance Pro</p>
             </div>
           </div>
@@ -556,10 +568,15 @@ export default function App() {
                 ) : (
                   <button 
                     onClick={login}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                    disabled={isLoginLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
                   >
-                    <LogIn size={18} />
-                    <span>Sign In to Sync</span>
+                    {isLoginLoading ? (
+                      <RefreshCw size={18} className="animate-spin" />
+                    ) : (
+                      <LogIn size={18} />
+                    )}
+                    <span>{isLoginLoading ? "Signing In..." : "Sign In to Sync"}</span>
                   </button>
                 )}
               </>
@@ -1246,7 +1263,7 @@ export default function App() {
               <Activity size={28} />
             </div>
             <div className="ml-1">
-              <h1 className="text-2xl font-black tracking-tight text-slate-800">Clinic Lab Economics</h1>
+              <h1 className="text-2xl font-black tracking-tight text-slate-800">BK Lab Plus Economics</h1>
               <p className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black leading-none mt-1">HEALTH FINANCE PRO</p>
             </div>
             <div className="ml-auto text-right">
