@@ -49,10 +49,18 @@ input[type=number] {
     box-sizing: border-box;
     position: relative;
     background: white !important;
+    break-after: page;
+    min-height: 295mm; /* Slightly less than A4 to prevent spillover */
+    overflow: hidden; /* Prevent tiny spills from creating new pages */
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    min-height: auto;
   }
 
   .page-break {
-    break-before: page;
+    clear: both;
   }
 
   .print-header-sticky {

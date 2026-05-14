@@ -973,7 +973,7 @@ export default function App() {
         </div>
 
         {/* Page 2: Visual Analysis (การวิเคราะห์เชิงภาพ) */}
-        <div className="print-page page-break">
+        <div className="print-page">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Activity size={24} />
@@ -1015,7 +1015,7 @@ export default function App() {
         </div>
 
         {/* Page 3: Pricing Strategy (กลยุทธ์การตั้งราคา) */}
-        <div className="print-page page-break">
+        <div className="print-page">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Target size={24} />
@@ -1070,8 +1070,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Page 4: Operational Details (รายละเอียดการดำเนินงาน) */}
-        <div className="print-page page-break">
+        {/* Page 4: Operational Details & Final Strategy (รายละเอียดและการเติบโต) */}
+        <div className="print-page pb-10">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Activity size={24} />
@@ -1102,7 +1102,7 @@ export default function App() {
               </div>
             </div>
 
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 px-2 mt-12 mb-4">Detailed Test Inventory (รายการทดสอบรายหน่วย)</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 px-2 mt-4 mb-2">Detailed Test Inventory (รายการทดสอบรายหน่วย)</h3>
             <table className="w-full border-collapse print-table border border-slate-200">
               <thead>
                 <tr className="bg-slate-900 text-white text-left text-[9px] uppercase font-black tracking-wider">
@@ -1138,88 +1138,99 @@ export default function App() {
                 })}
               </tbody>
             </table>
+
+            {/* Final Target & Goal Summary */}
+            <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-200 flex justify-between items-center">
+              <div>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">PROFIT TARGET (เป้าหมายกำไร)</p>
+                <h4 className="text-2xl font-black text-slate-800">{(data.targetProfit || 0).toLocaleString()} <span className="text-xs">บาท/เดือน</span></h4>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">PERFORMANCE</p>
+                <p className="text-xl font-black text-blue-600">{((totals.profit / (data.targetProfit || 1)) * 100).toFixed(1)}%</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Page 5: Strategic Growth (การเติบโตเชิงกลยุทธ์) */}
-        <div className="print-page page-break">
+        {/* Page 5: Custom Goals & Strategic Plans (เป้าหมายและการลงทุน) */}
+        <div className="print-page">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Target size={24} />
             </div>
-            <h2 className="text-xl font-black text-slate-800">Profit Goals & Strategic Planning (เป้าหมายกำไรและการวางแผนกลยุทธ์)</h2>
+            <h2 className="text-xl font-black text-slate-800">Custom Goals & Strategic Results (การวิเคราะห์สเปเชียลตี้)</h2>
           </div>
 
-          <div className="mb-10 p-8 bg-blue-50 rounded-[2.5rem] border-2 border-blue-100 flex justify-between items-center">
-            <div>
-              <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Profit Target / Month</p>
-              <h4 className="text-4xl font-black text-blue-700">{(data.targetProfit || 0).toLocaleString()} <span className="text-xl">บาท</span></h4>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Status vs Goal</p>
-              <p className="text-2xl font-black text-indigo-700">{((totals.profit / (data.targetProfit || 1)) * 100).toFixed(1)}%</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6 mb-12">
-            {[
-              { name: 'Plan A: Volume Focus', breakdown: totals.planA },
-              { name: 'Plan B: Profit Focus', breakdown: totals.planB },
-              { name: 'Plan C: Balanced', breakdown: totals.planC }
-            ].map((plan) => (
-              <div key={plan.name} className="print-card border-none shadow-sm !p-6">
-                <h4 className="font-black text-sm text-slate-800 border-b pb-2 mb-4">{plan.name}</h4>
-                <div className="space-y-3">
-                  {plan.breakdown.map((item: any) => (
-                    <div key={item.id} className="flex justify-between text-[10px]">
-                      <span className="font-bold text-slate-500 truncate mr-2">{item.name}</span>
-                      <span className="font-black text-slate-900">{item.targetVol} <span className="opacity-40">เคส</span></span>
-                    </div>
-                  ))}
-                </div>
+          <div className="space-y-8">
+            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex justify-between items-center shadow-xl">
+              <div>
+                <h3 className="text-2xl font-black mb-1">Custom Goal Analysis</h3>
+                <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold">ผลกำไรจากการตั้งเป้าหมายจำนวนเคสด้วยตนเอง</p>
               </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-8">
-            <div className="print-card overflow-hidden !p-0">
-              <div className="bg-slate-900 p-6 text-white text-center">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-1">CRM Efficiency (Customer LTV)</p>
-                <p className="text-3xl font-black">
-                   {(
-                    ((totals.revenue - totals.variableCost) / (data.tests.reduce((acc, t) => acc + t.testsPerMonth, 0) || 1)) * 
-                    data.crmParams.visitsPerYear * 
-                    (1 + data.crmParams.returningRate / 100)
-                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })} บ.
-                </p>
-                <p className="text-[9px] font-bold text-blue-400 mt-2">Annual Value generated per 1 regular customer</p>
-              </div>
-              <div className="p-6 grid grid-cols-2 gap-4">
-                <div>
-                   <p className="text-[9px] font-black uppercase text-slate-400">Retention</p>
-                   <p className="text-sm font-black">{data.crmParams.returningRate}%</p>
-                </div>
-                <div>
-                   <p className="text-[9px] font-black uppercase text-slate-400">Visits/Year</p>
-                   <p className="text-sm font-black">{data.crmParams.visitsPerYear}</p>
-                </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">CUSTOM PROFIT / MONTH</p>
+                <p className="text-4xl font-black text-blue-400">{(totals.customTotalProfit).toLocaleString()} บ.</p>
               </div>
             </div>
 
-            <div className="print-card">
-              <h3 className="text-sm font-black mb-4 uppercase tracking-widest text-slate-400 border-b pb-2">Reinvestment Details</h3>
-              <div className="space-y-3">
-                {data.reinvestments.map(r => (
-                  <div key={r.id} className="flex justify-between text-[11px] border-b border-dashed pb-1">
-                    <span className="text-slate-600">{r.name}</span>
-                    <span className="font-bold">{r.amount.toLocaleString()} บ.</span>
+            <div className="grid grid-cols-2 gap-6">
+               <div className="print-card">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 border-b pb-2">Custom Breakdown</h4>
+                  <div className="space-y-3">
+                    {totals.customBreakdown.map((item: any) => (
+                      <div key={`print-custom-${item.id}`} className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-600 font-bold">{item.name}</span>
+                        <span className="font-black text-slate-900">{item.count} <span className="text-[9px] text-slate-400">เคส</span></span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-2 text-right">
-                <p className="text-[9px] font-black text-slate-400 uppercase">Total Re-investment</p>
-                <p className="text-xl font-black text-blue-600">{totals.reinvestmentTotal.toLocaleString()} บาท</p>
-              </div>
+               </div>
+
+               <div className="print-card !bg-white">
+                 <h4 className="font-black text-xs text-slate-400 uppercase tracking-widest mb-4 border-b pb-2">Reinvestment Plan</h4>
+                 <div className="space-y-2">
+                    {data.reinvestments.map(r => (
+                      <div key={r.id} className="flex justify-between text-[11px]">
+                        <span className="text-slate-600">{r.name}</span>
+                        <span className="font-bold">{r.amount.toLocaleString()} บ.</span>
+                      </div>
+                    ))}
+                    <div className="pt-2 border-t flex justify-between font-black text-blue-600 text-sm">
+                      <span>Total Re-invest</span>
+                      <span>{totals.reinvestmentTotal.toLocaleString()} บ.</span>
+                    </div>
+                 </div>
+               </div>
+            </div>
+
+            <div className="print-card !p-0 overflow-hidden !bg-slate-50">
+               <div className="p-6 flex justify-between items-center border-b border-slate-100">
+                  <h4 className="font-black text-xs text-slate-400 uppercase tracking-widest">Growth Opportunities (CRM & LTV)</h4>
+                  <span className="text-[9px] font-bold text-slate-400">Calculated based on retention rate ({data.crmParams.returningRate}%)</span>
+               </div>
+               <div className="p-8 flex justify-between items-center">
+                  <div>
+                    <p className="text-3xl font-black text-slate-800">
+                      {(
+                        ((totals.revenue - totals.variableCost) / (data.tests.reduce((acc, t) => acc + t.testsPerMonth, 0) || 1)) * 
+                        data.crmParams.visitsPerYear * 
+                        (1 + data.crmParams.returningRate / 100)
+                      ).toLocaleString(undefined, { maximumFractionDigits: 0 })} บ.
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Annual Value Generated per regular customer</p>
+                  </div>
+                  <div className="text-right flex items-center gap-4">
+                     <div>
+                       <p className="text-[9px] font-black text-slate-400 uppercase">Retention</p>
+                       <p className="text-lg font-black">{data.crmParams.returningRate}%</p>
+                     </div>
+                     <div>
+                       <p className="text-[9px] font-black text-slate-400 uppercase">Visits</p>
+                       <p className="text-lg font-black">{data.crmParams.visitsPerYear}/y</p>
+                     </div>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
