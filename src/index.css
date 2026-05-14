@@ -23,12 +23,19 @@ input[type=number] {
 
 @media print {
   @page {
-    size: auto;
-    margin: 0; /* Hides browser URL, Date, Title, etc. */
+    size: A4;
+    margin: 0; /* Hides browser default metadata like URL at the bottom */
   }
   
   body {
-    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Reset margin for the actual print-only container to let @page handle it */
+  .print-only {
+    display: block !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -37,40 +44,33 @@ input[type=number] {
     display: none !important;
   }
 
-  .print-only {
-    display: block !important;
-  }
-
-  .page-break {
-    break-before: page;
-  }
-
   .print-page {
-    padding: 15mm;
-    min-height: 297mm;
+    padding: 15mm; /* Apply margin as internal padding */
+    min-height: 296mm; /* Almost full A4 height */
     box-sizing: border-box;
     position: relative;
     break-after: page;
+    background: white !important;
+    overflow: hidden;
   }
 
   .print-page:last-child {
     break-after: auto;
-    min-height: auto;
   }
 
   .print-header-sticky {
     display: flex !important;
     align-items: center;
     gap: 16px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     border-bottom: 3px solid #3b82f6;
-    padding-bottom: 20px;
+    padding-bottom: 15px;
   }
 
   .print-card {
-    border: 1px solid #e1e9f4;
-    border-radius: 24px;
-    padding: 24px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
     background: #f8fafc;
     break-inside: avoid;
     -webkit-print-color-adjust: exact;
