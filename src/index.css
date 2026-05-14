@@ -41,16 +41,33 @@ input[type=number] {
 
   .page-break {
     break-before: page;
-    padding-top: 20mm;
   }
 
-  .print-header {
+  .print-page {
+    padding: 10mm 0;
+  }
+
+  .print-header-sticky {
     display: flex !important;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #3b82f6;
-    padding-bottom: 15px;
+    gap: 16px;
+    margin-bottom: 40px;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 20px;
+  }
+
+  .print-card {
+    border: 1px solid #e1e9f4;
+    border-radius: 24px;
+    padding: 24px;
+    background: #f8fafc;
+    break-inside: avoid;
+  }
+
+  .print-table th {
+    background-color: #0f172a !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
   }
 }
 
