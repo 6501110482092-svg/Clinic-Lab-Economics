@@ -1163,6 +1163,26 @@ export default function App() {
           </div>
 
           <div className="space-y-8">
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { name: 'Plan A: Volume Focus', breakdown: totals.planA, color: 'text-blue-600' },
+                { name: 'Plan B: Profit Focus', breakdown: totals.planB, color: 'text-indigo-600' },
+                { name: 'Plan C: Balanced', breakdown: totals.planC, color: 'text-violet-600' }
+              ].map((plan) => (
+                <div key={plan.name} className="print-card border-none shadow-sm !p-4 !bg-slate-50/50">
+                  <h4 className={cn("font-black text-[10px] uppercase tracking-wider border-b pb-2 mb-3", plan.color)}>{plan.name}</h4>
+                  <div className="space-y-2">
+                    {plan.breakdown.map((item: any) => (
+                      <div key={item.id} className="flex justify-between text-[9px]">
+                        <span className="font-bold text-slate-500 truncate mr-2">{item.name}</span>
+                        <span className="font-black text-slate-900">{item.targetVol} <span className="opacity-40">เคส</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex justify-between items-center shadow-xl">
               <div>
                 <h3 className="text-2xl font-black mb-1">Custom Goal Analysis</h3>
