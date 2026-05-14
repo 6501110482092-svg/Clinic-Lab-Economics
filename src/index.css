@@ -24,11 +24,12 @@ input[type=number] {
 @media print {
   @page {
     size: auto;
-    margin: 10mm;
+    margin: 0mm;
   }
   
   body {
     background-color: white !important;
+    margin: 0; /* Remove top/bottom margin that might trigger extra pages */
   }
 
   .no-print {
@@ -44,7 +45,10 @@ input[type=number] {
   }
 
   .print-page {
-    padding: 10mm 0;
+    padding: 15mm; /* Apply padding inside pages instead of body margin */
+    min-height: 100vh;
+    box-sizing: border-box;
+    position: relative;
   }
 
   .print-header-sticky {
@@ -62,12 +66,21 @@ input[type=number] {
     padding: 24px;
     background: #f8fafc;
     break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .print-table th {
     background-color: #0f172a !important;
     color: white !important;
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force colors in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 

@@ -183,9 +183,11 @@ export default function App() {
 
   const printReport = () => {
     const originalTitle = document.title;
-    document.title = 'Clinic Lab Economics Report';
+    document.title = ' '; // Empty title helps hide browser header
     window.print();
-    document.title = originalTitle;
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 100);
   };
 
   const totals = useMemo(() => {
@@ -898,8 +900,8 @@ export default function App() {
       </main>
 
       {/* Print Report Template */}
-      <div className="print-only bg-white min-h-screen">
-        {/* Page 1: Executive Overview */}
+      <div className="print-only bg-white">
+        {/* Page 1: Executive Overview (สรุปภาพรวมผู้บริหาร) */}
         <div className="print-page">
           <div className="print-header-sticky">
             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
@@ -910,7 +912,7 @@ export default function App() {
               <p className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black leading-none mt-1">HEALTH FINANCE PRO</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Financial Analytics Report</p>
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Financial Analytics Report (รายงานวิเคราะห์การเงิน)</p>
               <p className="text-xs font-bold text-slate-800">{new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
@@ -970,21 +972,22 @@ export default function App() {
           </div>
         </div>
 
-        {/* Page 2: Visual Analysis */}
+        {/* Page 2: Visual Analysis (การวิเคราะห์เชิงภาพ) */}
         <div className="print-page page-break">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Activity size={24} />
             </div>
-            <h2 className="text-xl font-black text-slate-800">Visual Insights & Profit Breakdown</h2>
+            <h2 className="text-xl font-black text-slate-800">Visual Insights & Profit Breakdown (ข้อมูลเชิงลึกและรายละเอียดกำไร)</h2>
           </div>
 
           <div className="space-y-12">
             <div className="print-card !bg-white">
                <h3 className="text-sm font-black mb-6 uppercase tracking-widest text-blue-600 border-b pb-2">สัดส่วนกำไรรายรายการ (Contribution per Test)</h3>
-               <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+               <div className="h-[400px] w-full flex justify-center">
                     <BarChart 
+                      width={700}
+                      height={400}
                       data={data.tests.map(t => {
                         const unitCost = t.reagentCost + t.consumablesCost + t.laborCost + t.machineDepreciation + t.qcCost + t.otherCosts;
                         return {
@@ -1001,15 +1004,13 @@ export default function App() {
                       <Bar dataKey="cost" name="ต้นทุนผันแปร" stackId="a" fill="#94a3b8" isAnimationActive={false} />
                       <Bar dataKey="profit" name="กำไรขั้นต้น" stackId="a" fill="#3b82f6" isAnimationActive={false} />
                     </BarChart>
-                  </ResponsiveContainer>
                </div>
             </div>
 
             <div className="print-card !bg-white">
                <h3 className="text-sm font-black mb-6 uppercase tracking-widest text-purple-600 border-b pb-2">โครงสร้างต้นทุนรวม (Total Cost Structure)</h3>
-               <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+               <div className="h-[400px] w-full flex justify-center">
+                    <PieChart width={700} height={400}>
                       <Pie
                         data={[
                           { name: 'Fixed Costs', value: totals.fixedCost },
@@ -1033,19 +1034,74 @@ export default function App() {
                       </Pie>
                       <Legend align="right" verticalAlign="middle" layout="vertical" />
                     </PieChart>
-                  </ResponsiveContainer>
                </div>
             </div>
           </div>
         </div>
 
-        {/* Page 3: Operational Details */}
+        {/* Page 3: Pricing Strategy (กลยุทธ์การตั้งราคา) */}
+        <div className="print-page page-break">
+          <div className="print-header-sticky">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+              <Target size={24} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800">Target Margin & Pricing Strategy (เป้าหมายกำไรและกลยุทธ์การตั้งราคา)</h2>
+          </div>
+
+          <div className="space-y-8">
+             <div className="print-card !bg-blue-600 border-none !text-white flex flex-row justify-between items-center shadow-xl">
+                <div>
+                  <h3 className="text-2xl font-black mb-1">Target GP Margin: {data.crmParams.targetMargin}%</h3>
+                  <p className="text-[10px] opacity-80 uppercase tracking-[0.2em] font-black">
+                     POSITIONING: {data.crmParams.targetMargin >= 50 ? 'Premium Quality' : data.crmParams.targetMargin >= 30 ? 'Balanced Market' : 'Cost Leadership'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-black opacity-60 uppercase mb-1">Multiplier</p>
+                  <p className="text-3xl font-black">{(1 / (1 - data.crmParams.targetMargin / 100)).toFixed(2)}x</p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 gap-4">
+                {data.tests.map(test => {
+                  const uc = test.reagentCost + test.consumablesCost + test.laborCost + test.machineDepreciation + test.qcCost + test.otherCosts;
+                  const suggested = uc / (1 - data.crmParams.targetMargin / 100);
+                  const margin = ((test.sellingPrice - uc) / (test.sellingPrice || 1)) * 100;
+                  return (
+                    <div key={`print-pricing-${test.id}`} className="print-card !bg-white !p-6 flex justify-between items-center border-l-[12px] border-l-blue-600">
+                      <div>
+                        <h4 className="font-bold text-lg text-slate-800">{test.name}</h4>
+                        <p className="text-[10px] text-slate-400 font-black">UNIT COST: {uc.toLocaleString()} บ.</p>
+                      </div>
+                      <div className="flex gap-16 text-right">
+                        <div>
+                           <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Selling Price</p>
+                           <p className="text-lg font-black text-slate-800">{test.sellingPrice.toLocaleString()} บ.</p>
+                           <p className={cn("text-[10px] font-bold", margin >= data.crmParams.targetMargin ? 'text-green-600' : 'text-amber-600')}>
+                              Margin: {margin.toFixed(1)}%
+                           </p>
+                        </div>
+                        <div className="w-px h-10 bg-slate-100 self-center" />
+                        <div>
+                           <p className="text-[9px] font-black text-blue-600 uppercase mb-1">Suggested (แนะนำ)</p>
+                           <p className="text-xl font-black text-blue-600">{Math.ceil(suggested).toLocaleString()} บ.</p>
+                           <p className="text-[10px] text-slate-400 font-bold">Goal: {data.crmParams.targetMargin}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+             </div>
+          </div>
+        </div>
+
+        {/* Page 4: Operational Details (รายละเอียดการดำเนินงาน) */}
         <div className="print-page page-break">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Activity size={24} />
             </div>
-            <h2 className="text-xl font-black text-slate-800">Operational Breakdown & Test Economics</h2>
+            <h2 className="text-xl font-black text-slate-800">Operational Breakdown & Test Economics (รายละเอียดต้นทุนและกำไรราบการ)</h2>
           </div>
 
           <div className="space-y-8">
@@ -1075,11 +1131,12 @@ export default function App() {
             <table className="w-full border-collapse print-table border border-slate-200">
               <thead>
                 <tr className="bg-slate-900 text-white text-left text-[9px] uppercase font-black tracking-wider">
-                  <th className="p-4">Lab Item</th>
-                  <th className="p-4">Unit Cost</th>
-                  <th className="p-4">Selling Price</th>
-                  <th className="p-4">Current Qty</th>
-                  <th className="p-4">Monthly Profit</th>
+                  <th className="p-4">Lab Item (รายการ)</th>
+                  <th className="p-4">Unit Cost (ต้นทุน)</th>
+                  <th className="p-4">Selling Price (ราคาขาย)</th>
+                  <th className="p-4">Suggested (แนะนำ)</th>
+                  <th className="p-4">Current Qty (จำนวน)</th>
+                  <th className="p-4">Monthly Profit (กำไร/ด.)</th>
                   <th className="p-4">Margin (%)</th>
                 </tr>
               </thead>
@@ -1089,11 +1146,13 @@ export default function App() {
                   const unitProfit = t.sellingPrice - uc;
                   const totalP = unitProfit * t.testsPerMonth;
                   const margin = (unitProfit / (t.sellingPrice || 1)) * 100;
+                  const suggested = uc / (1 - data.crmParams.targetMargin / 100);
                   return (
                     <tr key={t.id} className="text-[11px]">
                       <td className="p-4 font-bold text-slate-800">{t.name}</td>
                       <td className="p-4">{uc.toLocaleString()}</td>
                       <td className="p-4 font-black">{t.sellingPrice.toLocaleString()}</td>
+                      <td className="p-4 text-blue-600 font-bold">{Math.ceil(suggested).toLocaleString()}</td>
                       <td className="p-4">{t.testsPerMonth}</td>
                       <td className="p-4 font-bold text-blue-600">{totalP.toLocaleString()}</td>
                       <td className={cn("p-4 font-black", margin > 50 ? 'text-green-600' : 'text-slate-800')}>
@@ -1107,13 +1166,13 @@ export default function App() {
           </div>
         </div>
 
-        {/* Page 4: Strategic Growth */}
+        {/* Page 5: Strategic Growth (การเติบโตเชิงกลยุทธ์) */}
         <div className="print-page page-break">
           <div className="print-header-sticky">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-              <Activity size={24} />
+              <Target size={24} />
             </div>
-            <h2 className="text-xl font-black text-slate-800">Profit Goals & Strategic Planning</h2>
+            <h2 className="text-xl font-black text-slate-800">Profit Goals & Strategic Planning (เป้าหมายกำไรและการวางแผนกลยุทธ์)</h2>
           </div>
 
           <div className="mb-10 p-8 bg-blue-50 rounded-[2.5rem] border-2 border-blue-100 flex justify-between items-center">
