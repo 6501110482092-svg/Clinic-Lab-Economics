@@ -1223,15 +1223,11 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-8 pt-4 border-t flex justify-between items-center text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em] px-2">
-            <span>Clinic Lab Economic Analyzer PRO</span>
-            <span>© {new Date().getFullYear()} Finalized Report</span>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 function NumberInput({ 
   value, 

@@ -24,12 +24,12 @@ input[type=number] {
 @media print {
   @page {
     size: auto;
-    margin: 0mm;
+    margin: 15mm;
   }
   
   body {
     background-color: white !important;
-    margin: 0; /* Remove top/bottom margin that might trigger extra pages */
+    margin: 0;
   }
 
   .no-print {
@@ -45,17 +45,11 @@ input[type=number] {
   }
 
   .print-page {
-    padding: 15mm;
-    min-height: 280mm; /* Slightly less than A4 height to prevent blank page spill */
+    padding: 0;
+    min-height: auto;
     box-sizing: border-box;
     position: relative;
-    break-inside: avoid-page;
-    break-after: page;
-  }
-
-  .print-page:last-child {
-    break-after: auto;
-    min-height: auto;
+    break-inside: avoid;
   }
 
   .print-header-sticky {
