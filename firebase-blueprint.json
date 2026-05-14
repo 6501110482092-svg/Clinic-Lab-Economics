@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "Scenario": {
+      "title": "Scenario",
+      "description": "A set of laboratory economic parameters.",
+      "type": "object",
+      "properties": {
+        "tests": {
+          "type": "array",
+          "description": "List of lab tests and their costs."
+        },
+        "fixedCosts": {
+          "type": "object",
+          "description": "General fixed costs."
+        },
+        "crmParams": {
+          "type": "object",
+          "description": "Retention and CRM parameters."
+        },
+        "reinvestments": {
+          "type": "array",
+          "description": "List of reinvestment items."
+        },
+        "targetProfit": {
+          "type": "number"
+        },
+        "customGoals": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/scenarios/{scenarioId}": {
+      "schema": "Scenario",
+      "description": "Saved laboratory scenarios."
+    }
+  }
+}

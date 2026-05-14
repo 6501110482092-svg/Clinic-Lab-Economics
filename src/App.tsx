@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -16,7 +16,15 @@ import {
   Download,
   Calculator,
   LayoutDashboard,
-  Target
+  Target,
+  LogIn,
+  LogOut,
+  Share2,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Copy,
+  Check
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -34,6 +42,60 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { TestItem, FixedCosts, CRMParams, AppData, ReinvestmentItem } from './types';
+import { auth, db } from './lib/firebase';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut,
+  User
+} from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  serverTimestamp,
+  collection,
+  addDoc
+} from 'firebase/firestore';
+
+// Firebase Error Handling
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 // Utility for tailwind classes
 function cn(...inputs: ClassValue[]) {
@@ -102,27 +164,14 @@ const INITIAL_DATA: AppData = {
 };
 
 export default function App() {
-  const [data, setData] = useState<AppData>(() => {
-    try {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem('clinic_lab_data') : null;
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Robust merging to ensure structure consistency
-        return {
-          ...INITIAL_DATA,
-          ...parsed,
-          fixedCosts: { ...INITIAL_DATA.fixedCosts, ...(parsed.fixedCosts || {}) },
-          crmParams: { ...INITIAL_DATA.crmParams, ...(parsed.crmParams || {}) },
-          tests: parsed.tests || INITIAL_DATA.tests,
-          reinvestments: parsed.reinvestments || INITIAL_DATA.reinvestments,
-          customGoals: parsed.customGoals || INITIAL_DATA.customGoals
-        };
-      }
-    } catch (e) {
-      console.error("Error loading lab data:", e);
-    }
-    return INITIAL_DATA;
-  });
+  const [data, setData] = useState<AppData>(INITIAL_DATA);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [copied, setCopied] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [activeTab, setActiveTab] = useState<'cost' | 'pricing' | 'dashboard' | 'breakeven' | 'investment' | 'goals'>(() => {
     try {
@@ -133,13 +182,140 @@ export default function App() {
     return 'cost';
   });
 
+  // 1. Initial Data Load (Check Shared ID first, then LocalStorage)
   useEffect(() => {
-    localStorage.setItem('clinic_lab_data', JSON.stringify(data));
-  }, [data]);
+    const loadInitialData = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sharedId = params.get('shared');
+
+      if (sharedId) {
+        try {
+          const docRef = doc(db, 'scenarios', sharedId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const sharedData = docSnap.data();
+            setData({
+              ...INITIAL_DATA,
+              ...sharedData,
+            });
+            return;
+          }
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, `scenarios/${sharedId}`);
+        }
+      }
+
+      // Fallback to local storage if no sharing ID or sharing ID not found
+      try {
+        const saved = localStorage.getItem('clinic_lab_data');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setData({
+            ...INITIAL_DATA,
+            ...parsed,
+            fixedCosts: { ...INITIAL_DATA.fixedCosts, ...(parsed.fixedCosts || {}) },
+            crmParams: { ...INITIAL_DATA.crmParams, ...(parsed.crmParams || {}) },
+          });
+        }
+      } catch (e) {
+        console.error("Error loading local data:", e);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  // 2. Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      setIsAuthLoading(false);
+      
+      if (currentUser) {
+        // Load data from cloud when user logs in
+        try {
+          const docSnap = await getDoc(doc(db, 'users', currentUser.uid));
+          if (docSnap.exists()) {
+            const cloudData = docSnap.data();
+            setData(prev => ({
+              ...prev,
+              ...cloudData,
+            }));
+          }
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, `users/${currentUser.uid}`);
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // 3. Auto Save to Cloud (Debounced)
+  useEffect(() => {
+    if (!user) {
+      localStorage.setItem('clinic_lab_data', JSON.stringify(data));
+      return;
+    }
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          ...data,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (error) {
+        console.error("Auto-save failed", error);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 2000);
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [data, user]);
 
   useEffect(() => {
     localStorage.setItem('clinic_lab_active_tab', activeTab);
   }, [activeTab]);
+
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login failed", error);
+    }
+  };
+
+  const logout = () => signOut(auth);
+
+  const shareScenario = async () => {
+    setIsSaving(true);
+    try {
+      const docRef = await addDoc(collection(db, 'scenarios'), {
+        ...data,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      const url = `${window.location.origin}${window.location.pathname}?shared=${docRef.id}`;
+      setShareUrl(url);
+      setShowShareModal(true);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'scenarios');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const addTest = () => {
     const newTest: TestItem = {
@@ -346,6 +522,58 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!isAuthLoading && (
+              <>
+                {user ? (
+                  <div className="flex items-center gap-3 pr-2 border-r border-slate-200">
+                    <div className="hidden sm:flex flex-col items-end mr-1">
+                      <p className="text-[10px] font-black uppercase text-blue-600 leading-none mb-1">Signed In</p>
+                      <p className="text-[11px] font-bold text-slate-800 leading-none truncate max-w-[120px]">{user.displayName || user.email}</p>
+                    </div>
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border-2 border-blue-100" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                        {user.email?.[0].toUpperCase()}
+                      </div>
+                    )}
+                    <button 
+                      onClick={logout}
+                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      title="Sign Out"
+                    >
+                      <LogOut size={18} />
+                    </button>
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black border border-blue-100">
+                      {isSaving ? (
+                        <RefreshCw size={10} className="animate-spin" />
+                      ) : (
+                        <Cloud size={10} />
+                      )}
+                      {isSaving ? "SAVING..." : "SYNCED"}
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={login}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                  >
+                    <LogIn size={18} />
+                    <span>Sign In to Sync</span>
+                  </button>
+                )}
+              </>
+            )}
+
+            <button 
+              onClick={shareScenario}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-2 text-sm font-bold"
+              title="Share Scenario"
+            >
+              <Share2 size={18} />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+
             <button 
               onClick={printReport}
               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2 text-sm font-bold"
@@ -405,6 +633,65 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                  <Share2 size={32} />
+                </div>
+                <h3 className="text-2xl font-black text-slate-800 mb-2">Share Scenario</h3>
+                <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                  Anyone with this link can view your laboratory economic configuration.
+                </p>
+                
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3 mb-6 group hover:border-indigo-300 transition-all">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={shareUrl} 
+                    className="bg-transparent border-none focus:ring-0 text-slate-600 text-xs font-mono w-full truncate"
+                  />
+                  <button 
+                    onClick={copyToClipboard}
+                    className={cn(
+                      "p-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black uppercase tracking-widest",
+                      copied ? "bg-green-100 text-green-600" : "bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95"
+                    )}
+                  >
+                    {copied ? (
+                      <>
+                        <Check size={14} />
+                        COPIED
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        COPY
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                <button 
+                  onClick={() => setShowShareModal(false)}
+                  className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-900 transition-all active:scale-95 shadow-lg shadow-slate-200"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 no-print">
         <AnimatePresence mode="wait">

@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Scenario validation
+    function isValidScenario(data) {
+      return data.keys().hasAll(['tests', 'fixedCosts', 'crmParams', 'reinvestments', 'createdAt', 'updatedAt'])
+        && data.tests is list
+        && data.fixedCosts is map
+        && data.crmParams is map
+        && data.reinvestments is list
+        && (data.targetProfit == null || data.targetProfit is number)
+        && (data.customGoals == null || data.customGoals is map)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn() && request.auth.uid == userId
+        && isValidScenario(incoming())
+        && (request.method == 'create' ? incoming().createdAt == request.time : incoming().createdAt == existing().createdAt)
+        && incoming().updatedAt == request.time;
+    }
+
+    match /scenarios/{scenarioId} {
+      allow get: if isValidId(scenarioId);
+      allow list: if false; // No public listing
+      
+      allow create: if isValidId(scenarioId) 
+        && isValidScenario(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isValidId(scenarioId)
+        && isValidScenario(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Any change to scenario
+          incoming().diff(existing()).affectedKeys().hasAny(['tests', 'fixedCosts', 'crmParams', 'reinvestments', 'targetProfit', 'customGoals', 'updatedAt'])
+        );
+        
+      allow delete: if false; // Protection against accidental deletion
+    }
+  }
+}
