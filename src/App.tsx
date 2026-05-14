@@ -983,31 +983,6 @@ export default function App() {
 
           <div className="space-y-12">
             <div className="print-card !bg-white">
-               <h3 className="text-sm font-black mb-6 uppercase tracking-widest text-blue-600 border-b pb-2">สัดส่วนกำไรรายรายการ (Contribution per Test)</h3>
-               <div className="h-[400px] w-full flex justify-center">
-                    <BarChart 
-                      width={700}
-                      height={400}
-                      data={data.tests.map(t => {
-                        const unitCost = t.reagentCost + t.consumablesCost + t.laborCost + t.machineDepreciation + t.qcCost + t.otherCosts;
-                        return {
-                          name: t.name,
-                          cost: unitCost * t.testsPerMonth,
-                          profit: (t.sellingPrice - unitCost) * t.testsPerMonth
-                        };
-                      })}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-                    >
-                      <XAxis dataKey="name" angle={-45} textAnchor="end" fontSize={10} interval={0} />
-                      <YAxis fontSize={10} />
-                      <Legend verticalAlign="top" height={36}/>
-                      <Bar dataKey="cost" name="ต้นทุนผันแปร" stackId="a" fill="#94a3b8" isAnimationActive={false} />
-                      <Bar dataKey="profit" name="กำไรขั้นต้น" stackId="a" fill="#3b82f6" isAnimationActive={false} />
-                    </BarChart>
-               </div>
-            </div>
-
-            <div className="print-card !bg-white">
                <h3 className="text-sm font-black mb-6 uppercase tracking-widest text-purple-600 border-b pb-2">โครงสร้างต้นทุนรวม (Total Cost Structure)</h3>
                <div className="h-[400px] w-full flex justify-center">
                     <PieChart width={700} height={400}>
@@ -1247,11 +1222,11 @@ export default function App() {
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-12 pt-10 border-t flex justify-between items-center text-[10px] text-slate-300 font-bold uppercase tracking-[0.4em] px-10 pb-10">
-          <span>Clinic Lab Economic Analyzer PRO</span>
-          <span>© {new Date().getFullYear()} Finalized Report</span>
+          <div className="mt-8 pt-4 border-t flex justify-between items-center text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em] px-2">
+            <span>Clinic Lab Economic Analyzer PRO</span>
+            <span>© {new Date().getFullYear()} Finalized Report</span>
+          </div>
         </div>
       </div>
     </div>

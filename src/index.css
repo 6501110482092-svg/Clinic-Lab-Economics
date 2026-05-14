@@ -45,10 +45,17 @@ input[type=number] {
   }
 
   .print-page {
-    padding: 15mm; /* Apply padding inside pages instead of body margin */
-    min-height: 100vh;
+    padding: 15mm;
+    min-height: 280mm; /* Slightly less than A4 height to prevent blank page spill */
     box-sizing: border-box;
     position: relative;
+    break-inside: avoid-page;
+    break-after: page;
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    min-height: auto;
   }
 
   .print-header-sticky {
