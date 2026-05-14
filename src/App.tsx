@@ -249,6 +249,23 @@ export default function App() {
       return { id: t.id, name: t.name, contrib, count, margin };
     });
 
+    const reagentTotal = data.tests.reduce((acc, t) => acc + (t.reagentCost * t.testsPerMonth), 0);
+    const consumablesTotal = data.tests.reduce((acc, t) => acc + (t.consumablesCost * t.testsPerMonth), 0);
+    const laborTotal = data.tests.reduce((acc, t) => acc + (t.laborCost * t.testsPerMonth), 0);
+    const machineTotal = data.tests.reduce((acc, t) => acc + (t.machineDepreciation * t.testsPerMonth), 0);
+    const qcOtherTotal = data.tests.reduce((acc, t) => acc + ((t.qcCost + t.otherCosts) * t.testsPerMonth), 0);
+    
+    const pieTotal = totalFixed + reagentTotal + consumablesTotal + laborTotal + machineTotal + qcOtherTotal;
+    
+    const costBreakdownData = [
+      { name: 'Fixed Costs', value: totalFixed, percent: (totalFixed / (pieTotal || 1)) * 100 },
+      { name: 'Reagents', value: reagentTotal, percent: (reagentTotal / (pieTotal || 1)) * 100 },
+      { name: 'Consumables', value: consumablesTotal, percent: (consumablesTotal / (pieTotal || 1)) * 100 },
+      { name: 'Labor', value: laborTotal, percent: (laborTotal / (pieTotal || 1)) * 100 },
+      { name: 'Machine Costs', value: machineTotal, percent: (machineTotal / (pieTotal || 1)) * 100 },
+      { name: 'QC & Others', value: qcOtherTotal, percent: (qcOtherTotal / (pieTotal || 1)) * 100 },
+    ];
+
     return {
       revenue: totalRevenue,
       variableCost: totalVariableCost,
@@ -261,7 +278,8 @@ export default function App() {
       planB,
       planC,
       customTotalProfit,
-      customBreakdown
+      customBreakdown,
+      costBreakdownData
     };
   }, [data]);
 
@@ -538,14 +556,7 @@ export default function App() {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={[
-                            { name: 'Fixed Costs', value: totals.fixedCost },
-                            { name: 'Reagents', value: data.tests.reduce((acc, t) => acc + (t.reagentCost * t.testsPerMonth), 0) },
-                            { name: 'Consumables', value: data.tests.reduce((acc, t) => acc + (t.consumablesCost * t.testsPerMonth), 0) },
-                            { name: 'Labor', value: data.tests.reduce((acc, t) => acc + (t.laborCost * t.testsPerMonth), 0) },
-                            { name: 'Machine Costs', value: data.tests.reduce((acc, t) => acc + (t.machineDepreciation * t.testsPerMonth), 0) },
-                            { name: 'QC & Others', value: data.tests.reduce((acc, t) => acc + ((t.qcCost + t.otherCosts) * t.testsPerMonth), 0) },
-                          ]}
+                          data={totals.costBreakdownData}
                           cx="50%"
                           cy="50%"
                           innerRadius={80}
@@ -557,8 +568,20 @@ export default function App() {
                             <Cell key={`cell-${index}`} fill={color} strokeWidth={0} />
                           ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend iconType="circle" />
+                        <Tooltip 
+                          formatter={(value: number) => [
+                            `${value.toLocaleString()} บ. (${((value / (totals.costBreakdownData.reduce((a, b) => a + b.value, 0) || 1)) * 100).toFixed(1)}%)`,
+                            'Cost'
+                          ]}
+                        />
+                        <Legend 
+                          iconType="circle" 
+                          formatter={(value, entry: any) => (
+                            <span className="text-slate-600 font-bold text-xs">
+                              {value} ({entry.payload.percent.toFixed(1)}%)
+                            </span>
+                          )}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -983,18 +1006,11 @@ export default function App() {
 
           <div className="space-y-12">
             <div className="print-card !bg-white">
-               <h3 className="text-sm font-black mb-6 uppercase tracking-widest text-purple-600 border-b pb-2">โครงสร้างต้นทุนรวม (Total Cost Structure)</h3>
+               <h3 className="text-sm font-black mb-6 uppercase tracking-widest text-purple-600 border-b pb-2">โครงสร้างต้นทุนรวม (Total Cost Structure Breakdown)</h3>
                <div className="h-[400px] w-full flex justify-center">
                     <PieChart width={700} height={400}>
                       <Pie
-                        data={[
-                          { name: 'Fixed Costs', value: totals.fixedCost },
-                          { name: 'Reagents', value: data.tests.reduce((acc, t) => acc + (t.reagentCost * t.testsPerMonth), 0) },
-                          { name: 'Consumables', value: data.tests.reduce((acc, t) => acc + (t.consumablesCost * t.testsPerMonth), 0) },
-                          { name: 'Labor', value: data.tests.reduce((acc, t) => acc + (t.laborCost * t.testsPerMonth), 0) },
-                          { name: 'Machine Costs', value: data.tests.reduce((acc, t) => acc + (t.machineDepreciation * t.testsPerMonth), 0) },
-                          { name: 'QC & Others', value: data.tests.reduce((acc, t) => acc + ((t.qcCost + t.otherCosts) * t.testsPerMonth), 0) },
-                        ]}
+                        data={totals.costBreakdownData}
                         cx="50%"
                         cy="50%"
                         innerRadius={80}
@@ -1007,7 +1023,16 @@ export default function App() {
                           <Cell key={`cell-print-${index}`} fill={color} />
                         ))}
                       </Pie>
-                      <Legend align="right" verticalAlign="middle" layout="vertical" />
+                      <Legend 
+                        align="right" 
+                        verticalAlign="middle" 
+                        layout="vertical"
+                        formatter={(value, entry: any) => (
+                          <span className="text-slate-700 font-black text-sm">
+                            {value}: {entry.payload.percent.toFixed(1)}%
+                          </span>
+                        )}
+                      />
                     </PieChart>
                </div>
             </div>
@@ -1159,7 +1184,7 @@ export default function App() {
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Target size={24} />
             </div>
-            <h2 className="text-xl font-black text-slate-800">Custom Goals & Strategic Results (การวิเคราะห์สเปเชียลตี้)</h2>
+            <h2 className="text-xl font-black text-slate-800">Custom Goals & Strategic Results (การวิเคราะห์แผนกลยุทธ์เฉพาะทาง)</h2>
           </div>
 
           <div className="space-y-8">
