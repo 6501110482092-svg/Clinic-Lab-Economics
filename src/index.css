@@ -24,12 +24,13 @@ input[type=number] {
 @media print {
   @page {
     size: auto;
-    margin: 15mm;
+    margin: 0; /* Hides browser URL, Date, Title, etc. */
   }
   
   body {
     background-color: white !important;
-    margin: 0;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .no-print {
@@ -45,11 +46,16 @@ input[type=number] {
   }
 
   .print-page {
-    padding: 0;
-    min-height: auto;
+    padding: 15mm;
+    min-height: 297mm;
     box-sizing: border-box;
     position: relative;
-    break-inside: avoid;
+    break-after: page;
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    min-height: auto;
   }
 
   .print-header-sticky {
