@@ -103,15 +103,43 @@ const INITIAL_DATA: AppData = {
 
 export default function App() {
   const [data, setData] = useState<AppData>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('clinic_lab_data') : null;
-    return saved ? JSON.parse(saved) : INITIAL_DATA;
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('clinic_lab_data') : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Robust merging to ensure structure consistency
+        return {
+          ...INITIAL_DATA,
+          ...parsed,
+          fixedCosts: { ...INITIAL_DATA.fixedCosts, ...(parsed.fixedCosts || {}) },
+          crmParams: { ...INITIAL_DATA.crmParams, ...(parsed.crmParams || {}) },
+          tests: parsed.tests || INITIAL_DATA.tests,
+          reinvestments: parsed.reinvestments || INITIAL_DATA.reinvestments,
+          customGoals: parsed.customGoals || INITIAL_DATA.customGoals
+        };
+      }
+    } catch (e) {
+      console.error("Error loading lab data:", e);
+    }
+    return INITIAL_DATA;
   });
 
-  const [activeTab, setActiveTab] = useState<'cost' | 'pricing' | 'dashboard' | 'breakeven' | 'investment' | 'goals'>('cost');
+  const [activeTab, setActiveTab] = useState<'cost' | 'pricing' | 'dashboard' | 'breakeven' | 'investment' | 'goals'>(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('clinic_lab_active_tab') : null;
+      const validTabs = ['cost', 'pricing', 'dashboard', 'breakeven', 'investment', 'goals'];
+      if (saved && validTabs.includes(saved)) return saved as any;
+    } catch (e) { console.error(e); }
+    return 'cost';
+  });
 
   useEffect(() => {
     localStorage.setItem('clinic_lab_data', JSON.stringify(data));
   }, [data]);
+
+  useEffect(() => {
+    localStorage.setItem('clinic_lab_active_tab', activeTab);
+  }, [activeTab]);
 
   const addTest = () => {
     const newTest: TestItem = {
