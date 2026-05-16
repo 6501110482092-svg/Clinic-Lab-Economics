@@ -1128,7 +1128,7 @@ export default function App() {
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
               <Activity size={24} />
             </div>
-            <h2 className="text-xl font-black text-slate-800">Operational Breakdown & Test Economics (รายละเอียดต้นทุนและกำไรราบการ)</h2>
+            <h2 className="text-xl font-black text-slate-800">Operational Breakdown & Test Economics (รายละเอียดต้นทุนและกำไรรายการ)</h2>
           </div>
 
           <div className="space-y-8">
